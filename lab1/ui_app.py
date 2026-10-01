@@ -33,9 +33,14 @@ class BFSApp(tk.Tk):
         self.active_start = None
         self.active_target = None
         self.active_order = None
+        self._dragging_node = None
 
         self._build_ui()
         self.generate_new_graph()
+ 
+        self.canvas.mpl_connect('button_press_event', self.on_mouse_press)
+        self.canvas.mpl_connect('motion_notify_event', self.on_mouse_motion)
+        self.canvas.mpl_connect('button_release_event', self.on_mouse_release)
 
     def _build_ui(self):
         outer_frame = ttk.Frame(self, width=340)
@@ -81,7 +86,7 @@ class BFSApp(tk.Tk):
         add_row(
             control_frame, "Graph type:", self.graph_type_var,
             widget_cls=ttk.Combobox,
-            values=["Undirected graph", "Directed graph", "Tree", "Empty graph"], # Додано "Empty graph"
+            values=["Undirected graph", "Directed graph", "Tree", "Empty graph"],
             state="readonly"
         )
 
@@ -261,6 +266,40 @@ class BFSApp(tk.Tk):
                 self.draw_graph()
             else:
                 messagebox.showwarning("Warning", "This connection does not exist.")
+
+    def on_mouse_press(self, event):
+        if event.xdata is None or event.ydata is None:
+            return
+            
+        closest_node = None
+        min_dist = float('inf')
+        
+        for node, (nx_x, nx_y) in self.logic.pos.items():
+            dist = (nx_x - event.xdata)**2 + (nx_y - event.ydata)**2
+            if dist < min_dist:
+                min_dist = dist
+                closest_node = node
+        
+        if closest_node is not None and min_dist < 0.05:
+            self._dragging_node = closest_node
+
+    def on_mouse_motion(self, event):
+        if self._dragging_node is not None and event.xdata is not None and event.ydata is not None:
+            self.logic.pos[self._dragging_node] = (event.xdata, event.ydata)
+            
+            active_path = None
+            curr = None
+            vis = None
+            if self.current_state:
+                if self.current_state.get("status") == "found":
+                    active_path = self.current_state.get("path")
+                curr = self.current_state.get("current")
+                vis = self.current_state.get("visited")
+            
+            self.draw_graph(current=curr, visited=vis, path=active_path)
+
+    def on_mouse_release(self, event):
+        self._dragging_node = None
 
     def draw_graph(self, current=None, visited=None, path=None):
         self.ax.clear()
