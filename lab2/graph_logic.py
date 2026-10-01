@@ -67,25 +67,15 @@ class GraphSearchLogic:
             base_graph = nx.random_labeled_tree(num_nodes, seed=seed)
             tree_root = None
 
-        if is_directed:
-            self.G = nx.DiGraph()
-            for u, v in base_graph.edges():
-                if rng.random() > 0.5:
-                    self.G.add_edge(u, v)
-                else:
-                    self.G.add_edge(v, u)
-        else:
-            self.G = nx.Graph(base_graph)
+        self.G = nx.Graph(base_graph)
 
         nodes = list(self.G.nodes())
         for _ in range(extra_edges):
             u, v = rng.sample(nodes, 2)
             if u != v:
-                if is_directed and rng.random() > 0.5:
-                    u, v = v, u
                 self.G.add_edge(u, v)
 
-        undirected_skeleton = nx.Graph(self.G) if self.G.is_directed() else self.G
+        undirected_skeleton = nx.Graph(self.G)
 
         if nx.is_tree(undirected_skeleton):
             root = tree_root if tree_root is not None else max(
@@ -94,6 +84,17 @@ class GraphSearchLogic:
             self.pos = self._tree_positions(undirected_skeleton, root=root)
         else:
             self.pos = nx.kamada_kawai_layout(undirected_skeleton)
+
+        if is_directed:
+            di_G = nx.DiGraph()
+            di_G.add_nodes_from(self.G.nodes())
+            for u, v in self.G.edges():
+            
+                if rng.random() > 0.5:
+                    di_G.add_edge(u, v)
+                else:
+                    di_G.add_edge(v, u)
+            self.G = di_G
 
         return self.G, self.pos
 
