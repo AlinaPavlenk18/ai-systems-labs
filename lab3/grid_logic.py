@@ -21,19 +21,27 @@ class WaveSearchLogic:
         self.grid = []
         self.start = (0, 0)
         self.target = (0, 0)
+        self.seed = 42
 
-    def generate_grid(self, rows=15, cols=15, wall_percent=25, seed=None):
-        rng = random.Random(seed)
+    def generate_grid(self, rows=15, cols=15, wall_percent=25, seed=42):
         self.rows = rows
         self.cols = cols
-        self.grid = [
-            [WALL if rng.random() < wall_percent / 100 else FREE for _ in range(cols)]
-            for _ in range(rows)
-        ]
+        self.seed = seed
         self.start = (0, 0)
         self.target = (rows - 1, cols - 1)
-        self.grid[self.start[0]][self.start[1]] = FREE
-        self.grid[self.target[0]][self.target[1]] = FREE
+
+        candidates = [
+            (random.Random(f"{seed}:{r}:{c}").random(), r, c)
+            for r in range(rows) for c in range(cols)
+            if (r, c) not in (self.start, self.target)
+        ]
+        candidates.sort()
+        total = rows * cols
+        n_walls = min(round(wall_percent / 100 * total), len(candidates))
+
+        self.grid = [[FREE] * cols for _ in range(rows)]
+        for _, r, c in candidates[:n_walls]:
+            self.grid[r][c] = WALL
         return self.grid
 
     def clear_walls(self):

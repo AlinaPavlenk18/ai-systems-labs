@@ -8,6 +8,7 @@ from datetime import datetime
 from grid_logic import WaveSearchLogic, OPERATORS, WALL
 
 CANVAS_SIZE = 720
+SEED = 42  
 
 
 def safe_get_int(var, field_name):
@@ -199,7 +200,7 @@ class WaveApp(tk.Tk):
         if not (10 <= rows <= 20 and 10 <= cols <= 20):
             messagebox.showwarning("Warning", "Per the assignment, the maze order should be 10-20.")
 
-        self.logic.generate_grid(rows, cols, walls)
+        self.logic.generate_grid(rows, cols, walls, SEED)
         self._reset_search()
 
     def clear_maze(self):
@@ -461,5 +462,4 @@ class WaveApp(tk.Tk):
                 state["discovered"],
                 elapsed_time,
             ])
-
 
